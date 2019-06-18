@@ -1,0 +1,5 @@
+logs
+.idea
+.env
+.env.production
+vendor
