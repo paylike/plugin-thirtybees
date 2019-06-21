@@ -50,6 +50,7 @@
                     amount: amount,
                     title: popup_title,
                     description: popup_description,
+                    locale: locale,
                     custom: {
                         orderId: id_cart,
                         products: products,
@@ -60,11 +61,11 @@
                             address: address,
                             customerIp: ip
                         },
-                        platform:{
+                        platform: {
                             version: platform_version,
                             name: ecommerce
                         },
-                        ecommerce:{
+                        ecommerce: {
                             version: platform_version,
                             name: ecommerce
                         },
@@ -111,8 +112,8 @@
             margin-top: 10px;
             " onclick="pay();">
                 <input style="float:left;" id="paylike-btn" type="image" name="submit"
-                       src="{$this_path_paylike}logo.png" alt=""
-                       style="vertical-align: middle; margin-right: 10px; width:57px; height:57px;"/>
+                        src="{$this_path_paylike}logo.png" alt=""
+                        style="vertical-align: middle; margin-right: 10px; width:57px; height:57px;"/>
                 <div style="float:left; margin-left:10px;">
                     <span style="margin-right: 10px;">{l s={$payment_method_title} mod='paylikepayment'}</span>
                     <span>

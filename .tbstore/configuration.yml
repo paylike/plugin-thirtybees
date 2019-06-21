@@ -1,0 +1,33 @@
+module_name: Paylike
+compatible_versions: 1.0.0+
+author: derikon
+category: payment
+tags:
+  - paylike
+  - paylike.io
+  - Paylike payment provider
+  - Accept online payments
+  - Online payments
+  - Easy implementation
+  - Easy setup
+  - Paylike for merchants
+  - Visa
+  - Mastercard
+  - Google Pay
+  - Apple Pay
+  - Paylike plugin
+  - Plugin
+
+description_short: Install the Paylike plugin for Thirty bees and start accepting online payments on your website in just a matter of minutes! Free multi-language support.
+description: description.md
+images:
+  - image-1.png
+  - image-2.png
+  - image-3.png
+license: MIT
+php_version:
+  - 5.5
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
