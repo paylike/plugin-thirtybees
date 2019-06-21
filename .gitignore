@@ -3,3 +3,5 @@ logs
 .env
 .env.production
 vendor
+paylikepayment/build.sh
+paylikepayment/builds
