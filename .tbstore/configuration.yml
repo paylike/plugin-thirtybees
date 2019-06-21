@@ -25,6 +25,7 @@ images:
   - image-2.png
   - image-3.png
 license: MIT
+gdpr_compliant: true
 php_version:
   - 5.5
   - 5.6
