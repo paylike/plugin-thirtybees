@@ -32,3 +32,8 @@ Under the extension settings, you can:
  * Change the capture type (Instant/Manual via Paylike Tool)
  
   
+ ## Refunding, voiding and capturing
+ 
+ * To refund an order you can use the paylike tool box you can find on the order edit screen by selecting refund in the select and inputing the amount.
+ * To void an order you can use the paylike tool box by selecting Void.
+ * To capture an order in delayed mode, you can either use the status set in settings (move the order to that status), or you can use the tool. 
