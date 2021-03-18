@@ -3,7 +3,7 @@
  *
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
- * @version   1.0.3
+ * @version   1.0.4
  * @link      http://www.derikon.com/
  *
  */
@@ -43,7 +43,7 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
         if (!$authorized) {
             die($this->module->l('Paylike payment method is not available.', 'paymentreturn'));
         }
-        
+
 
         if (Configuration::get('PAYLIKE_CHECKOUT_MODE') == 'delayed') {
             $this->fetch();
@@ -99,19 +99,19 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
 
                     $total = $fetch['transaction']['amount'] / $currency_multiplier;
                     $amount = $fetch['transaction']['amount'];
-                    
+
                     //$status_paid = Configuration::get('PS_OS_PAYMENT');
                     $status_paid = 3; //Processing in progress
 
                     if ($this->module->validateOrder((int)$cart->id, $status_paid, $total, $this->module->displayName, $message, array(), null, false, $customer->secure_key)) {
                         $this->module->storeTransactionID($transactionid, $this->module->currentOrder, $total, $captured = 'NO');
-                        
+
                         $redirectLink = __PS_BASE_URI__.'index.php?controller=order-confirmation&id_cart='.$cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key;
                         Tools::redirectLink($redirectLink);
                     } else {
                         //Paylike\Transaction::void($transactionid, ['amount' => $amount]); //Cancel Order
                         Paylike\Transaction::void($transactionid, array('amount' => $fetch['transaction']['amount'])); //Cancel Order
-                        
+
                         Logger::addLog('Invalid transaction.');
                         $this->context->smarty->assign(array(
                             'paylike_order_error' => 1,
@@ -200,7 +200,7 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
                         $amount = $capture['transaction']['amount'];
 
                         $validOrder = $this->module->validateOrder((int)$cart->id, $status_paid, $total, $this->module->displayName, null, array(), null, false, $customer->secure_key);
-                        
+
                         $message = 'Trx ID: '.$transactionid.'
                             Authorized Amount: '.($capture['transaction']['amount'] / $currency_multiplier).'
                             Captured Amount: '.($capture['transaction']['capturedAmount'] / $currency_multiplier).'
