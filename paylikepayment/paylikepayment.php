@@ -4,7 +4,7 @@
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
  * @license   Addons PrestaShop license limitation
- * @version   1.0.3
+ * @version   1.0.4
  * @link      http://www.derikon.com/
  *
  */
@@ -26,7 +26,7 @@ class PaylikePayment extends PaymentModule {
 	public function __construct() {
 		$this->name       = 'paylikepayment';
 		$this->tab        = 'payments_gateways';
-		$this->version    = '1.0.3';
+		$this->version    = '1.0.4';
 		$this->author     = 'DerikonDevelopment';
 		$this->bootstrap  = true;
 		$this->module_key = '1d083bab290f652fb6fb7ae35f9f0942';
@@ -624,7 +624,7 @@ class PaylikePayment extends PaymentModule {
 
 	public function hookHeader() {
 		/*if(Configuration::get('PAYLIKE_STATUS') == 'enabled' && $this->context->controller->php_self == 'order') {
-            $this->context->controller->addJs('https://sdk.paylike.io/3.js');
+            $this->context->controller->addJs('https://sdk.paylike.io/6.js');
         }*/
 	}
 
