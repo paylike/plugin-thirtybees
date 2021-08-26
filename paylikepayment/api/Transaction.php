@@ -3,7 +3,6 @@
  *
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
- * @version   1.0.0
  * @link      http://www.derikon.com/
  *
  */
@@ -15,7 +14,6 @@ namespace Paylike;
  * @package Paylike
  * Handles transaction operations.
  *
- * @version    1.0.0
  */
 if (!class_exists('Paylike\\Transaction')) {
     class Transaction
