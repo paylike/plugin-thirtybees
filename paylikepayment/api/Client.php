@@ -3,7 +3,6 @@
  *
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
- * @version   1.0.0
  * @link      http://www.derikon.com/
  *
  */

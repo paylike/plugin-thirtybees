@@ -18,10 +18,18 @@
             height: 27px;
         }
     </style>
-    <script type="text/javascript" src="https://sdk.paylike.io/6.js"></script>
+    <script type="text/javascript" src="https://sdk.paylike.io/10.js"></script>
     <script>
-        var PAYLIKE_PUBLIC_KEY = "{$PAYLIKE_PUBLIC_KEY|escape:'htmlall':'UTF-8'}";
+        /** Initialize paylike public key object. */
+        var PAYLIKE_PUBLIC_KEY = {
+            key: "{$PAYLIKE_PUBLIC_KEY|escape:'htmlall':'UTF-8'}"
+        };
+
+        /** Initialize Paylike object. */
         var paylike = Paylike(PAYLIKE_PUBLIC_KEY);
+
+        /** Initialize payment variables. */
+        var test_mode = "{$test_mode}";
         var shop_name = "{$shop_name|escape:'htmlall':'UTF-8'}";
         var PS_SSL_ENABLED = "{$PS_SSL_ENABLED|escape:'htmlall':'UTF-8'}";
         var host = "{$http_host|escape:'htmlall':'UTF-8'}";
@@ -29,7 +37,8 @@
         var popup_title = "{$popup_title nofilter}";
         var popup_description = "{$popup_description nofilter}"; //html variable can not be escaped;
         var currency_code = "{$currency_code|escape:'htmlall':'UTF-8'}";
-        var amount = "{$amount|escape:'htmlall':'UTF-8'}";
+        var amount = {$amount|escape:'htmlall':'UTF-8'};
+        var exponent = {$exponent};
         var id_cart = {$id_cart}; //html variable can not be escaped;
         var products = {$products}; //html variable can not be escaped;
         var name = "{$name|escape:'htmlall':'UTF-8'}";
@@ -45,9 +54,13 @@
         var qry_str = "{$qry_str}"; //html variable can not be escaped;
 
         function pay() {
-            paylike.popup({
-                    currency: currency_code,
-                    amount: amount,
+            paylike.pay({
+                    test: ('test' == test_mode) ? (true) : (false),
+                    amount: {
+                        currency: currency_code,
+                        exponent: exponent,
+                        value: amount
+                    },
                     title: popup_title,
                     description: popup_description,
                     locale: locale,
@@ -69,8 +82,9 @@
                             version: platform_version,
                             name: ecommerce
                         },
-                        version: module_version
-
+                        paylike_module: {
+                            version: module_version
+                        }
                     },
 
                 },

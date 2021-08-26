@@ -4,7 +4,6 @@
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
  * @license   Addons PrestaShop license limitation
- * @version   1.0.4
  * @link      http://www.derikon.com/
  *
  */
@@ -26,7 +25,7 @@ class PaylikePayment extends PaymentModule {
 	public function __construct() {
 		$this->name       = 'paylikepayment';
 		$this->tab        = 'payments_gateways';
-		$this->version    = '1.0.4';
+		$this->version    = '1.1.0';
 		$this->author     = 'DerikonDevelopment';
 		$this->bootstrap  = true;
 		$this->module_key = '1d083bab290f652fb6fb7ae35f9f0942';
@@ -698,11 +697,12 @@ class PaylikePayment extends PaymentModule {
 		$currency_multiplier = $this->getPaylikeCurrencyMultiplier( $currency->iso_code );
 		$amount              = ceil( Tools::ps_round( $params['cart']->getOrderTotal(), $decimals ) * $currency_multiplier ); //paid amounts with 100 to handle
 		$currency_code       = $currency->iso_code;
+		$exponent            = $this->getPaylikeCurrency($currency->iso_code)['exponent'];
 		$customer            = new Customer( (int) $params['cart']->id_customer );
 		$name                = $customer->firstname . ' ' . $customer->lastname;
 		$email               = $customer->email;
 		$customer_address    = new Address( (int) ( $params['cart']->id_address_delivery ) );
-		$telephone           = ! empty( $customer_address->phone ) ? $customer_address->phone : ! empty( $customer_address->phone_mobile ) ? $customer_address->phone_mobile : '';
+		$telephone           = (! empty( $customer_address->phone ) ? $customer_address->phone : ! empty( $customer_address->phone_mobile )) ? $customer_address->phone_mobile : '';
 		$address             = $customer_address->address1 . ', ' . $customer_address->address2 . ', ' . $customer_address->city . ', ' . $customer_address->country . ' - ' . $customer_address->postcode;
 		$ip                  = Tools::getRemoteAddr();
 		$locale              = $this->context->language->iso_code;
@@ -725,10 +725,12 @@ class PaylikePayment extends PaymentModule {
 			'payment_method_creditcard_logo' => explode( ',', Configuration::get( 'PAYLIKE_PAYMENT_METHOD_LOGO' ) ),
 			'payment_method_desc'            => $payment_method_desc,
 			'paylike_status'                 => Configuration::get( 'PAYLIKE_STATUS' ),
+			'test_mode'                 	 => Configuration::get( 'PAYLIKE_TRANSACTION_MODE' ),
 			'popup_title'                    => $popup_title,
 			'popup_description'              => $popup_description,
 			'currency_code'                  => $currency_code,
 			'amount'                         => $amount,
+			'exponent'                       => $exponent,
 			'id_cart'                        => Tools::jsonEncode( $params['cart']->id ),
 			'products'                       => Tools::jsonEncode( $products_array ),
 			'name'                           => $name,
