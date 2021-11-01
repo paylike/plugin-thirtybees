@@ -13,6 +13,8 @@ You can also find information about the plugin here: https://paylike.io/plugins/
 
 * *The plugin has been tested with most versions of Thirtybees versions at every iteration. We recommend using the latest version of Thirtybees, but if that is not possible for some reason, test the plugin with your Thirtybees version and it would probably function properly.*
 
+Last tested version on: Thirthybees 1.3.0
+
 ## Installation
 
 Once you have installed Thirtybees, follow these simple steps:
