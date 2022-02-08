@@ -101,7 +101,7 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
                     $amount = $fetch['transaction']['amount'];
 
                     //$status_paid = Configuration::get('PS_OS_PAYMENT');
-                    $status_paid = 3; //Processing in progress
+                    $status_paid = Configuration::get( 'PAYLIKE_ORDER_STATUS' );
 
                     if ($this->module->validateOrder((int)$cart->id, $status_paid, $total, $this->module->displayName, $message, array(), null, false, $customer->secure_key)) {
                         $this->module->storeTransactionID($transactionid, $this->module->currentOrder, $total, $captured = 'NO');
