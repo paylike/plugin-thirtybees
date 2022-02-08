@@ -56,7 +56,7 @@ class PaylikePayment extends PaymentModule {
 		Configuration::updateValue( 'PAYLIKE_LIVE_PUBLIC_KEY', '' );
 		Configuration::updateValue( 'PAYLIKE_LIVE_SECRET_KEY', '' );
 		Configuration::updateValue( 'PAYLIKE_CHECKOUT_MODE', 'delayed' );
-		Configuration::updateValue( 'PAYLIKE_ORDER_STATUS', Configuration::get( 'PAYLIKE_ORDER_STATUS' ) );
+		Configuration::updateValue( 'PAYLIKE_ORDER_STATUS',  1 ); // order status 1 = Payment Accepted
 		Configuration::updateValue( 'PAYLIKE_STATUS', 'enabled' );
 		Configuration::updateValue( 'PAYLIKE_SECRET_KEY', '' );
 
@@ -314,7 +314,7 @@ class PaylikePayment extends PaymentModule {
 		}
 
 		//Fetch Status list
-		$valid_statuses = array( '2', '3', '4', '5', '12' );
+		$valid_statuses = array( '1', '2', '3', '4', '5', '12' );
 		$statuses       = OrderState::getOrderStates( (int) $this->context->language->id );
 		foreach ( $statuses as $status ) {
 			//$this->statuses_array[$status['id_order_state']] = $status['name'];
