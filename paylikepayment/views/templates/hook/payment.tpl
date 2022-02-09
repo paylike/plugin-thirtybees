@@ -74,10 +74,10 @@
                             address: address,
                             customerIp: ip
                         },
-                        platform: {
-                            version: platform_version,
-                            name: ecommerce
-                        },
+                        // platform: {
+                        //     version: platform_version,
+                        //     name: ecommerce
+                        // },
                         ecommerce: {
                             version: platform_version,
                             name: ecommerce
