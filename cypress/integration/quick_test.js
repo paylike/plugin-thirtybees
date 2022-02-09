@@ -59,27 +59,27 @@ describe('paylike plugin quick test', () => {
         });
     }
 
-    // /**
-    //  * Make a payment
-    //  */
-    // it('makes a payment with Paylike', () => {
-    //     TestMethods.makePaymentFromFrontend(Cypress.env('ENV_CURRENCY_TO_CHANGE_WITH'));
-    // });
+    /**
+     * Make a payment
+     */
+    it('makes a payment with Paylike', () => {
+        TestMethods.makePaymentFromFrontend(Cypress.env('ENV_CURRENCY_TO_CHANGE_WITH'));
+    });
 
-    // /**
-    //  * Process last order from admin panel
-    //  */
-    // it('process (capture/refund/void) an order from admin panel', () => {
-    //     TestMethods.processOrderFromAdmin();
-    // });
+    /**
+     * Process last order from admin panel
+     */
+    it('process (capture/refund/void) an order from admin panel', () => {
+        TestMethods.processOrderFromAdmin();
+    });
 
-    // /**
-    //  * Modify shop email settings (enable notifications)
-    //  */
-    // if (Cypress.env('ENV_STOP_EMAIL') ?? false) {
-    //     it('roll back settings for email notifications', () => {
-    //         TestMethods.activateEmailNotifications();
-    //     });
-    // }
+    /**
+     * Modify shop email settings (enable notifications)
+     */
+    if (Cypress.env('ENV_STOP_EMAIL') ?? false) {
+        it('roll back settings for email notifications', () => {
+            TestMethods.activateEmailNotifications();
+        });
+    }
 
 }); // describe
