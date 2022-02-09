@@ -27,14 +27,6 @@ export let PaylikeTestHelper = {
         cy.get('#card-code').type(`${Cypress.env('ENV_CARD_CVV')}{enter}`);
     },
     /**
-     * Change order status
-     */
-    changeOrderStatus(status) {
-        cy.get('.hkc-md-6 #hikashop_order_field_general a .fa-pen').click();
-        cy.get('.hikashop_order_status select').select(status);
-        cy.get('.hkc-md-6 #hikashop_order_field_general .fa-save').click();
-    },
-    /**
      * Login into admin
      */
     loginIntoAdmin() {
