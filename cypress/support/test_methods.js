@@ -111,84 +111,63 @@ export var TestMethods = {
 
     /**
      * Make an instant payment
+     * @param {String} currency
      */
     makePaymentFromFrontend(currency) {
         /** Go to store frontend. */
         cy.goToPage(this.StoreUrl);
 
-        /** Client frontend login. */
-        cy.get('input[name=username]').type(`${this.StoreUsername}`);
-        cy.get('input[name=password]').type(`${this.StorePassword}{enter}`);
-
         /** Change currency & wait for products price to finish update. */
-        cy.get('#hikashopcurrency option').each(($option) => {
-            if ($option.text().includes(currency)) {
-                cy.get('#hikashopcurrency').select($option.val());
+        cy.get('#blockcurrencies .dropdown-toggle').click();
+        cy.get('#blockcurrencies ul a').each(($listLink) => {
+            if ($listLink.text().includes(currency)) {
+                cy.get($listLink).click();
             }
         });
-        cy.wait(2000);
+        cy.wait(1000);
+
+        /** Make all add-to-cart buttons visible. */
+        cy.get('.product_list.grid .button-container').each(($div) => {
+            $div.css({'visibility':'visible', 'opacity': '100'})
+        });
 
         /** Add to cart random product. */
         var randomInt = PaylikeTestHelper.getRandomInt(/*max*/ 6);
-        cy.get('.hikabtn.hikacart').eq(randomInt).click();
-
-        /** Wait for 'added to cart' notification to disappear */
-        cy.wait(3000);
-        cy.get('.notifyjs-metro-base.notifyjs-metro-info').should('not.exist');
+        cy.get('.ajax_add_to_cart_button').eq(randomInt).click();
 
         /** Proceed to checkout. */
-        cy.get('.hikashop_cart_proceed_to_checkout').click();
-
-        /** Choose Paylike. */
-        cy.get(`input[id*=${this.PaylikeName}]`).click();
+        cy.get('.next a').click();
+        cy.get('.standard-checkout').click();
 
         /**
-         * Extract order amount
+         * Client frontend login.
          */
-        cy.get('.hikashop_checkout_cart_final_total').then(($frontendTotalAmount) => {
-            /** Get multiplier based on currency code. */
-            var multiplier = PaylikeCurrencies.get_paylike_currency_multiplier(currency);
+        cy.get('#email').type(`${this.StoreUsername}`);
+        cy.get('input[name=passwd]').type(`${this.StorePassword}{enter}`);
 
-            /** Replace any character except numbers, commas, points */
-            var filtered = ($frontendTotalAmount.text()).replace(/[^0-9,.]/g, '')
-            var matchPointFirst = filtered.match(/\..*,/g);
-            var matchCommaFirst = filtered.match(/,.*\./g);
+        /** Continue checkout. */
+        cy.get('button[name=processAddress]').click();
+        cy.get('#cgv').click();
+        cy.get('.standard-checkout').click();
 
-            if (matchPointFirst) {
-                var amountAsText = (filtered.replace('.', '')).replace(',', '.');
-            } else if (matchCommaFirst) {
-                var amountAsText = filtered.replace(',', '');
-            } else {
-                var amountAsText = filtered.replace(',', '.');
-            }
-            var formattedAmount = parseFloat(amountAsText);
-            var expectedAmount = formattedAmount * multiplier;
-
-            /** Save expected amount as global. */
-            cy.wrap(expectedAmount).as('expectedAmount');
+        /** Verify amount. */
+        cy.get('#total_price').then(($totalAmount) => {
+            var expectedAmount = this.filterAndGetAmountInMinor($totalAmount, currency);
+            cy.window().then(($win) => {
+                expect(expectedAmount).to.eq(Number($win.amount))
+            })
         });
 
-        /** Go to checkout next step. */
-        cy.get('#hikabtn_checkout_next').click();
-
-        /** Check if order was placed. */
-        cy.get('#paylike_paying').should('be.visible');
+        /** Click on Paylike. */
+        cy.get('#paylike-btn').click();
 
         /**
          * Fill in Paylike popup.
          */
         PaylikeTestHelper.fillAndSubmitPaylikePopup();
 
-        /** Verify amount. */
-        /** We verify here, because "window.paylikeAmount" is available after paylike popup show */
-        cy.get('@expectedAmount').then(expectedAmount => {
-            cy.window().then((win) => {
-                expect(expectedAmount).to.eq(Number(win.paylikeAmount))
-            })
-        });
-
         /** Check if order was paid. */
-        cy.get('.hikashop_paylike_end #paylike_paid').should('be.visible');
+        cy.get('.alert-success').should('contain.text', 'Congratulations, your payment has been approved');
     },
 
     /**
@@ -204,21 +183,19 @@ export var TestMethods = {
             cy.goToPage(this.OrdersPageAdminUrl);
         }
 
-        PaylikeTestHelper.setPositionRelativeOn('#subhead-container');
-
-        /** Click on first order from table (last created). */
-        cy.get('.hikashop_order_number_value a').first().click();
+        /** Click on first (latest in time) order from orders table. */
+        cy.get('.table.order tbody tr').first().click();
 
         /**
-         * If CaptureMode='Delayed' => make 'capture' (set shipped on order status)
-         * If CaptureMode='Instant' => make 'refund' (set refunded on order status)
+         * If CaptureMode='Delayed', set shipped on order status & make 'capture'
+         * If CaptureMode='Instant', set refunded on order status & make 'refund'
          */
         if ('Delayed' === this.CaptureMode) {
-            PaylikeTestHelper.setPositionRelativeOn('#subhead-container');
-            PaylikeTestHelper.changeOrderStatus('shipped');
+            // this.changeOrderStatus('shipped');
+            this.paylikeActionOnOrderAmount('capture');
         } else {
-            PaylikeTestHelper.setPositionRelativeOn('#subhead-container');
-            PaylikeTestHelper.changeOrderStatus('refunded');
+            // this.changeOrderStatus('refunded');
+            this.paylikeActionOnOrderAmount('refund');
         }
     },
     /**
@@ -245,5 +222,51 @@ export var TestMethods = {
                 this.logVersions();
             });
         }
-    }
+    },
+    /**
+     * Filter amount text with symbols
+     * Get it in currency minor unit
+     *
+     * @param {Object} $unfilteredAmount
+     * @param {String} currency
+     */
+    filterAndGetAmountInMinor($unfilteredAmount, currency) {
+        /** Replace any character except numbers, commas, points */
+        var filtered = ($unfilteredAmount.text()).replace(/[^0-9,.]/g, '')
+        var matchPointFirst = filtered.match(/\..*,/g);
+        var matchCommaFirst = filtered.match(/,.*\./g);
+
+        if (matchPointFirst) {
+            var amountAsText = (filtered.replace('.', '')).replace(',', '.');
+        } else if (matchCommaFirst) {
+            var amountAsText = filtered.replace(',', '');
+        } else {
+            var amountAsText = filtered.replace(',', '.');
+        }
+
+        var formattedAmount = parseFloat(amountAsText);
+
+        /** Get multiplier based on currency code. */
+        var multiplier = PaylikeCurrencies.get_paylike_currency_multiplier(currency);
+
+        return formattedAmount * multiplier;
+    },
+    // /**
+    //  * Change order status
+    //  * @param {String} status
+    //  */
+    // changeOrderStatus(status) {
+    //     cy.get('.text-right .btn-group .icon-search-plus').click();
+    //     cy.get('#id_order_state_chosen').clear().type(`${status}{enter}`);
+    //     cy.get('button[name=submitState]').click()
+    // },
+    /**
+     * Capture an order amount
+     * @param {String} paylikeAction
+     */
+     paylikeActionOnOrderAmount(paylikeAction) {
+        cy.get('#paylike_action').select(paylikeAction);
+        cy.get('#submit_paylike_action').click()
+        cy.get('#alert').should('not.exist');
+    },
 }
