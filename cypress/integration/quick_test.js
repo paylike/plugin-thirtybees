@@ -28,7 +28,7 @@ describe('paylike plugin quick test', () => {
      */
     if (TestMethods.NeedToAdminLogin) {
         it('login into admin backend', () => {
-            PaylikeTestHelper.loginIntoAdmin();
+            TestMethods.loginIntoAdminBackend();
         });
     }
 
