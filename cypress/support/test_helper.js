@@ -1,23 +1,6 @@
+import { PaylikeCurrencies } from './currencies.js';
+
 export let PaylikeTestHelper = {
-    /**
-     * Set position=relative on selected element
-     * Useful when an element cover another element
-     *
-     * @param {String} selector
-     */
-    setPositionRelativeOn(selector) {
-        cy.get(selector).then(($selectedElement) => {
-            $selectedElement.attr('style', 'position:relative;');
-        });
-    },
-    /**
-     * Get a random int/float between 0 and provided max
-     * @param {int|float} max
-     * @returns int|float
-     */
-    getRandomInt(max) {
-        return Math.floor(Math.random() * max);
-    },
     /**
      * Fill Paylike popup and submit the form
      */
@@ -26,13 +9,95 @@ export let PaylikeTestHelper = {
         cy.get('#card-expiry').type(`${Cypress.env('ENV_CARD_EXPIRY')}`);
         cy.get('#card-code').type(`${Cypress.env('ENV_CARD_CVV')}{enter}`);
     },
+
     /**
-     * Login into admin
+     * Filter amount text with symbols
+     * Get it in currency minor unit
+     *
+     * @param {Object} $unfilteredAmount
+     * @param {String} currency
+     *
+     * @return {Number}
      */
-    loginIntoAdmin() {
-        /** Select username & password inputs, then press enter. */
-        cy.get('input[name=email]').type(`${Cypress.env('ENV_ADMIN_USER')}`);
-        cy.get('input[name=passwd]').type(`${Cypress.env('ENV_ADMIN_PASS')}{enter}`);
-        cy.wait(2000);
+     filterAndGetAmountInMinor($unfilteredAmount, currency) {
+        /** Replace any character except numbers, commas, points */
+        var filtered = ($unfilteredAmount.text()).replace(/[^0-9,.]/g, '')
+        var matchPointFirst = filtered.match(/\..*,/g);
+        var matchCommaFirst = filtered.match(/,.*\./g);
+
+        if (matchPointFirst) {
+            var amountAsText = (filtered.replace('.', '')).replace(',', '.');
+        } else if (matchCommaFirst) {
+            var amountAsText = filtered.replace(',', '');
+        } else {
+            var amountAsText = filtered.replace(',', '.');
+        }
+
+        var formattedAmount = parseFloat(amountAsText);
+
+        /** Get multiplier based on currency code. */
+        var multiplier = PaylikeCurrencies.get_paylike_currency_multiplier(currency);
+
+        return formattedAmount * multiplier;
     },
+
+    /**
+     * Filter amount text with symbols
+     * Get it in currency major unit
+     *
+     * @param {Object} $unfilteredAmount
+     * @param {String} currency
+     *
+     * @return {Number}
+     */
+     filterAndGetAmountInMajorUnit($unfilteredAmount, currency) {
+        /** Replace any character except numbers, commas, points */
+        var filtered = ($unfilteredAmount.text()).replace(/[^0-9,.]/g, '')
+        var matchPointFirst = filtered.match(/\..*,/g);
+        var matchCommaFirst = filtered.match(/,.*\./g);
+
+        if (matchPointFirst) {
+            var amountAsText = (filtered.replace('.', '')).replace(',', '.');
+        } else if (matchCommaFirst) {
+            var amountAsText = filtered.replace(',', '');
+        } else {
+            var amountAsText = filtered.replace(',', '.');
+        }
+
+        return parseFloat(amountAsText);
+    },
+
+    /**
+     * Set position=relative on selected element
+     * Useful when an element cover another element
+     *
+     * @param {String} selector
+     */
+     setPositionRelativeOn(selector) {
+        cy.get(selector).then(($selectedElement) => {
+            $selectedElement.attr('style', 'position:relative;');
+        });
+    },
+
+    /**
+     * Set visibility=visible on selected element
+     * Useful when an element must be clicked but is hidden
+     *
+     * @param {String} selector
+     */
+     setVisibleOn(selector) {
+        cy.get(selector).each(($selector) => {
+            $selector.css({'visibility':'visible', 'opacity': '100'})
+        });
+    },
+
+    /**
+     * Get a random int/float between 0 and provided max
+     * @param {int|float} max
+     * @returns int|float
+     */
+    getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    },
+
 };
