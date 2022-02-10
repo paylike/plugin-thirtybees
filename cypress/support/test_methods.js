@@ -3,21 +3,17 @@
 'use strict';
 
 import { PaylikeTestHelper } from './test_helper.js';
-import { PaylikeCurrencies } from './currencies.js';
 
 export var TestMethods = {
 
     /** Admin & frontend user credentials. */
     StoreUrl: Cypress.env('ENV_STORE_URL'),
     AdminUrl: Cypress.env('ENV_ADMIN_URL'),
-    StoreUsername: Cypress.env('ENV_CLIENT_USER'),
-    StorePassword: Cypress.env('ENV_CLIENT_PASS'),
-
     RemoteVersionLogUrl: Cypress.env('REMOTE_LOG_URL'),
     CaptureMode: Cypress.env('ENV_CAPTURE_MODE'),
 
     /**
-     * Constants used to make or skip some tests.
+     * Constant used to make or skip some tests.
      */
     NeedToAdminLogin: true === Cypress.env('ENV_STOP_EMAIL') ||
                       true === Cypress.env('ENV_LOG_VERSION') ||
@@ -26,9 +22,23 @@ export var TestMethods = {
     /** Construct some variables to be used bellow. */
     ShopName: 'thirtybees',
     PaylikeName: 'paylike',
+    FrontendCurrency: '',
     ModulesAdminUrl: '/index.php?controller=AdminModules',
     ManageEmailSettingUrl: '/index.php?controller=AdminEmails',
     OrdersPageAdminUrl: '/index.php?controller=AdminOrders',
+
+    /**
+     * Login to admin backend account
+     */
+     loginIntoAdminBackend() {
+        cy.loginIntoAccount('input[name=email]', 'input[name=passwd]', 'admin');
+    },
+    /**
+     * Login to client|user frontend account
+     */
+     loginIntoClientAccount() {
+        cy.loginIntoAccount('#email', 'input[name=passwd]', 'client');
+    },
 
     /**
      * Get Shop & Paylike versions and send log data.
@@ -101,7 +111,7 @@ export var TestMethods = {
         /** Select payment gateways. */
         cy.get('#filter_payments_gateways').click();
 
-        cy.get('a[href*="configure=paylikepayment&tab_module=payments_gateways&module_name=paylikepayment"').click();
+        cy.get('a[href*="configure=paylikepayment&tab_module=payments_gateways"').click();
         cy.wait(1000);
 
         /** Change capture mode. */
@@ -122,14 +132,14 @@ export var TestMethods = {
         cy.get('#blockcurrencies ul a').each(($listLink) => {
             if ($listLink.text().includes(currency)) {
                 cy.get($listLink).click();
+                /** Make this currency globally available. */
+                this.FrontendCurrency = currency;
             }
         });
         cy.wait(1000);
 
         /** Make all add-to-cart buttons visible. */
-        cy.get('.product_list.grid .button-container').each(($div) => {
-            $div.css({'visibility':'visible', 'opacity': '100'})
-        });
+        PaylikeTestHelper.setVisibleOn('.product_list.grid .button-container');
 
         /** Add to cart random product. */
         var randomInt = PaylikeTestHelper.getRandomInt(/*max*/ 6);
@@ -142,8 +152,7 @@ export var TestMethods = {
         /**
          * Client frontend login.
          */
-        cy.get('#email').type(`${this.StoreUsername}`);
-        cy.get('input[name=passwd]').type(`${this.StorePassword}{enter}`);
+        this.loginIntoClientAccount();
 
         /** Continue checkout. */
         cy.get('button[name=processAddress]').click();
@@ -152,7 +161,7 @@ export var TestMethods = {
 
         /** Verify amount. */
         cy.get('#total_price').then(($totalAmount) => {
-            var expectedAmount = this.filterAndGetAmountInMinor($totalAmount, currency);
+            var expectedAmount = PaylikeTestHelper.filterAndGetAmountInMinor($totalAmount, currency);
             cy.window().then(($win) => {
                 expect(expectedAmount).to.eq(Number($win.amount))
             })
@@ -174,11 +183,10 @@ export var TestMethods = {
      * Process last order from admin panel
      */
     processOrderFromAdmin(contextFlag = false) {
-
         /** Login & go to admin orders page. */
         if (false === this.NeedToAdminLogin && !contextFlag) {
             cy.goToPage(this.OrdersPageAdminUrl);
-            PaylikeTestHelper.loginIntoAdmin();
+            this.loginIntoAdminBackend();
         } else {
             cy.goToPage(this.OrdersPageAdminUrl);
         }
@@ -191,13 +199,12 @@ export var TestMethods = {
          * If CaptureMode='Instant', set refunded on order status & make 'refund'
          */
         if ('Delayed' === this.CaptureMode) {
-            // this.changeOrderStatus('shipped');
             this.paylikeActionOnOrderAmount('capture');
         } else {
-            // this.changeOrderStatus('refunded');
-            this.paylikeActionOnOrderAmount('refund');
+            this.paylikeActionOnOrderAmount('refund', this.FrontendCurrency);
         }
     },
+
     /**
      * Make payment with specified currency and process order
      */
@@ -223,50 +230,30 @@ export var TestMethods = {
             });
         }
     },
-    /**
-     * Filter amount text with symbols
-     * Get it in currency minor unit
-     *
-     * @param {Object} $unfilteredAmount
-     * @param {String} currency
-     */
-    filterAndGetAmountInMinor($unfilteredAmount, currency) {
-        /** Replace any character except numbers, commas, points */
-        var filtered = ($unfilteredAmount.text()).replace(/[^0-9,.]/g, '')
-        var matchPointFirst = filtered.match(/\..*,/g);
-        var matchCommaFirst = filtered.match(/,.*\./g);
 
-        if (matchPointFirst) {
-            var amountAsText = (filtered.replace('.', '')).replace(',', '.');
-        } else if (matchCommaFirst) {
-            var amountAsText = filtered.replace(',', '');
-        } else {
-            var amountAsText = filtered.replace(',', '.');
-        }
-
-        var formattedAmount = parseFloat(amountAsText);
-
-        /** Get multiplier based on currency code. */
-        var multiplier = PaylikeCurrencies.get_paylike_currency_multiplier(currency);
-
-        return formattedAmount * multiplier;
-    },
-    // /**
-    //  * Change order status
-    //  * @param {String} status
-    //  */
-    // changeOrderStatus(status) {
-    //     cy.get('.text-right .btn-group .icon-search-plus').click();
-    //     cy.get('#id_order_state_chosen').clear().type(`${status}{enter}`);
-    //     cy.get('button[name=submitState]').click()
-    // },
     /**
      * Capture an order amount
      * @param {String} paylikeAction
+     * @param {String} currency
+     * @param {Boolean} partialRefund
      */
-     paylikeActionOnOrderAmount(paylikeAction) {
+     paylikeActionOnOrderAmount(paylikeAction, currency = '', partialRefund = false) {
         cy.get('#paylike_action').select(paylikeAction);
-        cy.get('#submit_paylike_action').click()
-        cy.get('#alert').should('not.exist');
+
+        /** Enter full amount for refund. */
+        if ('refund' === paylikeAction) {
+            cy.get('#total_order  .amount').then(($totalAmount) => {
+                var minorAmount = PaylikeTestHelper.filterAndGetAmountInMajorUnit($totalAmount, currency);
+                cy.get('input[name=paylike_amount_to_refund]').clear().type(`${minorAmount}`);
+                cy.get('input[name=paylike_refund_reason]').clear().type('automatic refund');
+            });
+        }
+
+        cy.get('#submit_paylike_action').click();
+        cy.wait(1000);
+        cy.get('#alert.alert-info').should('not.exist');
+        cy.get('#alert.alert-warning').should('not.exist');
+        cy.get('#alert.alert-danger').should('not.exist');
     },
+
 }
