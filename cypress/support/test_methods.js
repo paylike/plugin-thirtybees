@@ -243,8 +243,8 @@ export var TestMethods = {
         /** Enter full amount for refund. */
         if ('refund' === paylikeAction) {
             cy.get('#total_order  .amount').then(($totalAmount) => {
-                var minorAmount = PaylikeTestHelper.filterAndGetAmountInMajorUnit($totalAmount, currency);
-                cy.get('input[name=paylike_amount_to_refund]').clear().type(`${minorAmount}`);
+                var majorAmount = PaylikeTestHelper.filterAndGetAmountInMajorUnit($totalAmount, currency);
+                cy.get('input[name=paylike_amount_to_refund]').clear().type(`${majorAmount}`);
                 cy.get('input[name=paylike_refund_reason]').clear().type('automatic refund');
             });
         }
