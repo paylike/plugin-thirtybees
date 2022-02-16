@@ -141,6 +141,8 @@ export var TestMethods = {
         /** Make all add-to-cart buttons visible. */
         PaylikeTestHelper.setVisibleOn('.product_list.grid .button-container');
 
+        cy.wait(1000);
+
         /** Add to cart random product. */
         var randomInt = PaylikeTestHelper.getRandomInt(/*max*/ 6);
         cy.get('.ajax_add_to_cart_button').eq(randomInt).click();
@@ -175,6 +177,8 @@ export var TestMethods = {
          */
         PaylikeTestHelper.fillAndSubmitPaylikePopup();
 
+        cy.wait(1000);
+        
         /** Check if order was paid. */
         cy.get('.alert-success').should('contain.text', 'Congratulations, your payment has been approved');
     },
