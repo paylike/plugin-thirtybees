@@ -7,7 +7,7 @@ import { PaylikeTestHelper } from './test_helper.js';
 export var TestMethods = {
 
     /** Admin & frontend user credentials. */
-    StoreUrl: Cypress.env('ENV_STORE_URL'),
+    StoreUrl: (Cypress.env('ENV_ADMIN_URL').match(/^(?:http(?:s?):\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/im))[0],
     AdminUrl: Cypress.env('ENV_ADMIN_URL'),
     RemoteVersionLogUrl: Cypress.env('REMOTE_LOG_URL'),
     CaptureMode: Cypress.env('ENV_CAPTURE_MODE'),
@@ -178,7 +178,7 @@ export var TestMethods = {
         PaylikeTestHelper.fillAndSubmitPaylikePopup();
 
         cy.wait(1000);
-        
+
         /** Check if order was paid. */
         cy.get('.alert-success').should('contain.text', 'Congratulations, your payment has been approved');
     },
