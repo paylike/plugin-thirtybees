@@ -10,7 +10,7 @@ workflows:
       # "cypress" is the name of the imported orb
       # "run" is the name of the job defined in Cypress orb
       - cypress/run:
-          name: Run QUICK tests
+          name: Run_QUICK_tests
           context:
             - paylike
           spec: cypress/integration/quick_test.js
@@ -18,11 +18,10 @@ workflows:
             branches:
               only:
                 - master
-          post-steps:
-            - store_artifacts:
-                path: cypress/artifacts
       - cypress/run:
-          name: Run FULL tests
+          name: Run_FULL_tests
+          requires:
+            - Run_QUICK_tests
           context:
             - paylike
           spec: cypress/integration/full_test.js
@@ -30,6 +29,14 @@ workflows:
             branches:
               only:
                 - master
-          post-steps:
-            - store_artifacts:
-                path: cypress/artifacts
+      - cypress/run:
+          name: Run_LOG_VERSION_remotely
+          requires:
+            - Run_FULL_tests
+          context:
+            - paylike
+          spec: cypress/integration/log_version.js
+          filters:
+            branches:
+              only:
+                - master
