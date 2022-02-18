@@ -29,6 +29,7 @@ export var TestMethods = {
      * Login to client|user frontend account
      */
      loginIntoClientAccount() {
+        cy.get('#blockuserinfo-login').click();
         cy.loginIntoAccount('#email', 'input[name=passwd]', 'client');
     },
 
