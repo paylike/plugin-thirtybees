@@ -2,41 +2,63 @@
  *
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
- * @version   1.0.0
  * @link      http://www.derikon.com/
  *
  */
 
-$(document).ready(function(){
-    var html = '<a href="#" class="add-more-btn" data-toggle="modal" data-target="#logoModal"><i class="process-icon-plus" data-toggle="tooltip" title="Add your own logo"></i></a>';
-    $('select[name="PAYLIKE_PAYMENT_METHOD_CREDITCARD_LOGO[]"]').parent('div').append(html);
-    $('[data-toggle="tooltip"]').tooltip();
+/** Check if page was completely loaded. */
+ function onReady(method) {
+    var readyStateCheckInterval = setInterval(function() {
+        if (document && document.readyState === 'complete') {
+            clearInterval(readyStateCheckInterval);
+            method();
+        }
+    }, 10);
+}
 
-    $('.paylike-config').each(function(index, item){
-        if( $(item).hasClass('has-error') ) {
-            $(item).parents('.form-group').addClass('has-error');
+/** Call function when document is ready. */
+onReady(paylikeSettings);
+
+/**
+ * Add & change some html elements
+ * Add change logos & change language even listeners
+ */
+function paylikeSettings() {
+    var html = '<a href="#" class="add-more-btn" data-toggle="modal" data-target="#logoModal"><i class="process-icon-plus" data-toggle="tooltip" title="Add your own logo"></i></a>';
+    jQuery('select[name="PAYLIKE_PAYMENT_METHOD_CREDITCARD_LOGO[]"]').parent('div').append(html);
+    jQuery('[data-toggle="tooltip"]').tooltip();
+
+    jQuery('.paylike-config').each(function(index, item){
+        if( jQuery(item).hasClass('has-error') ) {
+            jQuery(item).parents('.form-group').addClass('has-error');
         }
     });
 
-    $('.paylike-language').bind('change', paylikeLanguageChange);
+    jQuery('.paylike-language').on('change', paylikeLanguageChange);
 
-    $('#logo_form').on('submit', ajaxSaveLogo);
-});
+    jQuery('#logo_form').on('submit', ajaxSaveLogo);
+}
 
+/**
+ * Change Language
+ */
 function paylikeLanguageChange(e){
-    var lang_code = $(e.currentTarget).val();
+    var lang_code = jQuery(e.currentTarget).val();
     window.location = admin_orders_uri + "&change_language&lang_code="+lang_code;
 }
 
+/**
+ * Save newly added logos
+ */
 function ajaxSaveLogo(e) {
     e.preventDefault();
-    $('#save_logo').button('loading');
-    $('#alert').html("").hide();
-    var url = $('#logo_form').attr('action');
+    jQuery('#save_logo').button('loading');
+    jQuery('#alert').html("").hide();
+    var url = jQuery('#logo_form').attr('action');
     console.log(url);
     //grab all form data
-    var formData = new FormData($(this)[0]);
-    $.ajax({
+    var formData = new FormData(jQuery(this)[0]);
+    jQuery.ajax({
         url : url,
         type : 'POST',
         data : formData,
@@ -47,17 +69,17 @@ function ajaxSaveLogo(e) {
         processData: false,
         success : function(response) {
             console.log(response);
-            $('#save_logo').button('reset');
+            jQuery('#save_logo').button('reset');
             if(response.status == 0) {
                 var html = "<strong>Error !</strong> " + response.message;
-                $('#alert').html(html)
+                jQuery('#alert').html(html)
                     .show()
                     .removeClass('alert-success')
                     .removeClass('alert-danger')
                     .addClass('alert-danger');
             } else if(response.status == 1) {
-                var html = "<strong>Seccess !</strong> " + response.message;
-                $('#alert').html(html)
+                var html = "<strong>Success !</strong> " + response.message;
+                jQuery('#alert').html(html)
                     .show()
                     .removeClass('alert-success')
                     .removeClass('alert-danger')

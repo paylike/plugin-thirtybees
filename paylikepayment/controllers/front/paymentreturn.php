@@ -101,9 +101,9 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
                     $amount = $fetch['transaction']['amount'];
 
                     //$status_paid = Configuration::get('PS_OS_PAYMENT');
-                    $status_paid = 3; //Processing in progress
+                    $status_authorized = Configuration::get( 'PAYLIKE_ORDER_STATUS_AUTHORIZED' );
 
-                    if ($this->module->validateOrder((int)$cart->id, $status_paid, $total, $this->module->displayName, $message, array(), null, false, $customer->secure_key)) {
+                    if ($this->module->validateOrder((int)$cart->id, $status_authorized, $total, $this->module->displayName, $message, array(), null, false, $customer->secure_key)) {
                         $this->module->storeTransactionID($transactionid, $this->module->currentOrder, $total, $captured = 'NO');
 
                         $redirectLink = __PS_BASE_URI__.'index.php?controller=order-confirmation&id_cart='.$cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key;
@@ -154,7 +154,7 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
         $decimals = (int)$currency->decimals * _PS_PRICE_COMPUTE_PRECISION_;
         $currency_multiplier = $this->module->getPaylikeCurrencyMultiplier($currency->iso_code);
         $cart_amount = ceil(Tools::ps_round($cart_total, $decimals) * $currency_multiplier);
-        //$status_paid = (int)Configuration::get('PAYLIKE_ORDER_STATUS');
+        //$status_paid = (int)Configuration::get('PAYLIKE_ORDER_STATUS_CAPTURED');
         //$status_paid = Configuration::get('PS_OS_PAYMENT');
         $transactionid = Tools::getValue('transactionid');
 
@@ -179,7 +179,7 @@ class PaylikepaymentPaymentReturnModuleFrontController extends ModuleFrontContro
                     ));
                     return $this->setTemplate('payment_error.tpl');
                 } else {
-                    $status_paid = (int)Configuration::get('PAYLIKE_ORDER_STATUS');
+                    $status_paid = (int)Configuration::get('PAYLIKE_ORDER_STATUS_CAPTURED');
 
                     $data = array(
                         'currency' => $currency->iso_code,

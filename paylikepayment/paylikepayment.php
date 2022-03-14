@@ -4,7 +4,6 @@
  * @author    DerikonDevelopment <ionut@derikon.com>
  * @copyright Copyright (c) permanent, DerikonDevelopment
  * @license   Addons PrestaShop license limitation
- * @version   1.0.4
  * @link      http://www.derikon.com/
  *
  */
@@ -26,7 +25,7 @@ class PaylikePayment extends PaymentModule {
 	public function __construct() {
 		$this->name       = 'paylikepayment';
 		$this->tab        = 'payments_gateways';
-		$this->version    = '1.0.4';
+		$this->version    = '1.1.0';
 		$this->author     = 'DerikonDevelopment';
 		$this->bootstrap  = true;
 		$this->module_key = '1d083bab290f652fb6fb7ae35f9f0942';
@@ -57,7 +56,8 @@ class PaylikePayment extends PaymentModule {
 		Configuration::updateValue( 'PAYLIKE_LIVE_PUBLIC_KEY', '' );
 		Configuration::updateValue( 'PAYLIKE_LIVE_SECRET_KEY', '' );
 		Configuration::updateValue( 'PAYLIKE_CHECKOUT_MODE', 'delayed' );
-		Configuration::updateValue( 'PAYLIKE_ORDER_STATUS', Configuration::get( 'PAYLIKE_ORDER_STATUS' ) );
+		Configuration::updateValue( 'PAYLIKE_ORDER_STATUS_AUTHORIZED',  1 ); // order status 1 = Payment Accepted
+		Configuration::updateValue( 'PAYLIKE_ORDER_STATUS_CAPTURED',  3 ); // order status 3 = Shipped
 		Configuration::updateValue( 'PAYLIKE_STATUS', 'enabled' );
 		Configuration::updateValue( 'PAYLIKE_SECRET_KEY', '' );
 
@@ -72,7 +72,7 @@ class PaylikePayment extends PaymentModule {
 
 	public function installDb() {
 		return (
-			Db::getInstance()->Execute( 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paylike_admin` (
+			Db::getInstance()->execute( 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paylike_admin` (
                 `id`				INT(11) NOT NULL AUTO_INCREMENT,
                 `paylike_tid`		VARCHAR(255) NOT NULL,
                 `order_id`			INT(11) NOT NULL,
@@ -83,7 +83,7 @@ class PaylikePayment extends PaymentModule {
                 PRIMARY KEY			(`id`)
                 ) ENGINE=InnoDB		DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;' )
 
-			&& Db::getInstance()->Execute( 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paylike_logos` (
+			&& Db::getInstance()->execute( 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paylike_logos` (
                 `id` INT(11) NOT NULL AUTO_INCREMENT,
                 `name` VARCHAR(255) NOT NULL,
                 `slug` VARCHAR(255) NOT NULL,
@@ -155,8 +155,8 @@ class PaylikePayment extends PaymentModule {
 
 		return (
 			parent::uninstall()
-			&& Db::getInstance()->Execute( 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paylike_admin`' )
-			&& Db::getInstance()->Execute( 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paylike_logos`' )
+			&& Db::getInstance()->execute( 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paylike_admin`' )
+			&& Db::getInstance()->execute( 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paylike_logos`' )
 			&& Configuration::deleteByName( 'PAYLIKE_PAYMENT_METHOD_TITLE' )
 			&& Configuration::deleteByName( 'PAYLIKE_PAYMENT_METHOD_LOGO' )
 			&& Configuration::deleteByName( 'PAYLIKE_PAYMENT_METHOD_DESC' )
@@ -169,7 +169,8 @@ class PaylikePayment extends PaymentModule {
 			&& Configuration::deleteByName( 'PAYLIKE_LIVE_PUBLIC_KEY' )
 			&& Configuration::deleteByName( 'PAYLIKE_LIVE_SECRET_KEY' )
 			&& Configuration::deleteByName( 'PAYLIKE_CHECKOUT_MODE' )
-			&& Configuration::deleteByName( 'PAYLIKE_ORDER_STATUS' )
+			&& Configuration::deleteByName( 'PAYLIKE_ORDER_STATUS_AUTHORIZED' )
+			&& Configuration::deleteByName( 'PAYLIKE_ORDER_STATUS_CAPTURED' )
 			&& Configuration::deleteByName( 'PAYLIKE_STATUS' )
 			&& Configuration::deleteByName( 'PAYLIKE_SECRET_KEY' )
 		);
@@ -249,7 +250,8 @@ class PaylikePayment extends PaymentModule {
 				Configuration::updateValue( 'PAYLIKE_LIVE_SECRET_KEY', $PAYLIKE_LIVE_SECRET_KEY );
 			}
 			Configuration::updateValue( 'PAYLIKE_CHECKOUT_MODE', Tools::getValue( 'PAYLIKE_CHECKOUT_MODE' ) );
-			Configuration::updateValue( 'PAYLIKE_ORDER_STATUS', Tools::getValue( 'PAYLIKE_ORDER_STATUS' ) );
+			Configuration::updateValue( 'PAYLIKE_ORDER_STATUS_AUTHORIZED', Tools::getValue( 'PAYLIKE_ORDER_STATUS_AUTHORIZED' ) );
+			Configuration::updateValue( 'PAYLIKE_ORDER_STATUS_CAPTURED', Tools::getValue( 'PAYLIKE_ORDER_STATUS_CAPTURED' ) );
 			Configuration::updateValue( 'PAYLIKE_STATUS', Tools::getValue( 'PAYLIKE_STATUS' ) );
 
 			if ( $valid ) {
@@ -315,7 +317,7 @@ class PaylikePayment extends PaymentModule {
 		}
 
 		//Fetch Status list
-		$valid_statuses = array( '2', '3', '4', '5', '12' );
+		$valid_statuses = array( '1', '2', '3', '4', '5', '12' );
 		$statuses       = OrderState::getOrderStates( (int) $this->context->language->id );
 		foreach ( $statuses as $status ) {
 			//$this->statuses_array[$status['id_order_state']] = $status['name'];
@@ -497,9 +499,21 @@ class PaylikePayment extends PaymentModule {
 					array(
 						'type'    => 'select',
 						'lang'    => true,
+						'label'   => '<span data-toggle="tooltip" title="' . $this->l( 'The status on which the order will be set once it gets the payment authorized' ) . '">' . $this->l( 'Order status after authorization' ) . '<i class="process-icon-help-new help-icon" aria-hidden="true"></i></span>',
+						'name'    => 'PAYLIKE_ORDER_STATUS_AUTHORIZED',
+						'class'   => 'paylike-config',
+						'options' => array(
+							'query' => $this->statuses_array,
+							'id'    => 'id_option',
+							'name'  => 'name'
+						)
+					),
+					array(
+						'type'    => 'select',
+						'lang'    => true,
 						//'label' => '<span data-toggle="tooltip" title="'.$this->l('The transaction will be captured once the order has the chosen status').'">'.$this->l('Capture on order status (delayed mode)').'<i class="process-icon-help-new help-icon" aria-hidden="true"></i></span>',
 						'label'   => '<span data-toggle="tooltip" title="' . $this->l( 'The status on which the order will be set once it gets the payment captured' ) . '">' . $this->l( 'Order status after capture' ) . '<i class="process-icon-help-new help-icon" aria-hidden="true"></i></span>',
-						'name'    => 'PAYLIKE_ORDER_STATUS',
+						'name'    => 'PAYLIKE_ORDER_STATUS_CAPTURED',
 						'class'   => 'paylike-config',
 						'options' => array(
 							'query' => $this->statuses_array,
@@ -609,7 +623,8 @@ class PaylikePayment extends PaymentModule {
 			'PAYLIKE_LIVE_PUBLIC_KEY'                        => Configuration::get( 'PAYLIKE_LIVE_PUBLIC_KEY' ),
 			'PAYLIKE_LIVE_SECRET_KEY'                        => Configuration::get( 'PAYLIKE_LIVE_SECRET_KEY' ),
 			'PAYLIKE_CHECKOUT_MODE'                          => Configuration::get( 'PAYLIKE_CHECKOUT_MODE' ),
-			'PAYLIKE_ORDER_STATUS'                           => Configuration::get( 'PAYLIKE_ORDER_STATUS' ),
+			'PAYLIKE_ORDER_STATUS_AUTHORIZED'                => Configuration::get( 'PAYLIKE_ORDER_STATUS_AUTHORIZED' ),
+			'PAYLIKE_ORDER_STATUS_CAPTURED'                  => Configuration::get( 'PAYLIKE_ORDER_STATUS_CAPTURED' ),
 			'PAYLIKE_STATUS'                                 => Configuration::get( 'PAYLIKE_STATUS' ),
 		);
 	}
@@ -698,11 +713,12 @@ class PaylikePayment extends PaymentModule {
 		$currency_multiplier = $this->getPaylikeCurrencyMultiplier( $currency->iso_code );
 		$amount              = ceil( Tools::ps_round( $params['cart']->getOrderTotal(), $decimals ) * $currency_multiplier ); //paid amounts with 100 to handle
 		$currency_code       = $currency->iso_code;
+		$exponent            = $this->getPaylikeCurrency($currency->iso_code)['exponent'];
 		$customer            = new Customer( (int) $params['cart']->id_customer );
 		$name                = $customer->firstname . ' ' . $customer->lastname;
 		$email               = $customer->email;
 		$customer_address    = new Address( (int) ( $params['cart']->id_address_delivery ) );
-		$telephone           = ! empty( $customer_address->phone ) ? $customer_address->phone : ! empty( $customer_address->phone_mobile ) ? $customer_address->phone_mobile : '';
+		$telephone           = (! empty( $customer_address->phone ) ? $customer_address->phone : ! empty( $customer_address->phone_mobile )) ? $customer_address->phone_mobile : '';
 		$address             = $customer_address->address1 . ', ' . $customer_address->address2 . ', ' . $customer_address->city . ', ' . $customer_address->country . ' - ' . $customer_address->postcode;
 		$ip                  = Tools::getRemoteAddr();
 		$locale              = $this->context->language->iso_code;
@@ -725,12 +741,14 @@ class PaylikePayment extends PaymentModule {
 			'payment_method_creditcard_logo' => explode( ',', Configuration::get( 'PAYLIKE_PAYMENT_METHOD_LOGO' ) ),
 			'payment_method_desc'            => $payment_method_desc,
 			'paylike_status'                 => Configuration::get( 'PAYLIKE_STATUS' ),
+			'test_mode'                 	 => Configuration::get( 'PAYLIKE_TRANSACTION_MODE' ),
 			'popup_title'                    => $popup_title,
 			'popup_description'              => $popup_description,
 			'currency_code'                  => $currency_code,
 			'amount'                         => $amount,
-			'id_cart'                        => Tools::jsonEncode( $params['cart']->id ),
-			'products'                       => Tools::jsonEncode( $products_array ),
+			'exponent'                       => $exponent,
+			'id_cart'                        => json_encode( $params['cart']->id ),
+			'products'                       => json_encode( $products_array ),
 			'name'                           => $name,
 			'email'                          => $email,
 			'telephone'                      => $telephone,
@@ -771,7 +789,7 @@ class PaylikePayment extends PaymentModule {
 	public function storeTransactionID( $paylike_id_transaction, $order_id, $total, $captured = 'NO' ) {
 		$query = 'INSERT INTO ' . _DB_PREFIX_ . 'paylike_admin (`paylike_tid`, `order_id`, `payed_amount`, `payed_at`, `captured`) VALUES ("' . pSQL( $paylike_id_transaction ) . '", "' . pSQL( $order_id ) . '", "' . pSQL( $total ) . '" , NOW(), "' . pSQL( $captured ) . '")';
 
-		return Db::getInstance()->Execute( $query );
+		return Db::getInstance()->execute( $query );
 	}
 
 	public function updateTransactionID( $paylike_id_transaction, $order_id, $fields = array() ) {
@@ -788,9 +806,9 @@ class PaylikePayment extends PaymentModule {
 					$fieldsStr .= ', ';
 				}
 			}
-			$query = 'UPDATE ' . _DB_PREFIX_ . 'paylike_admin SET ' . pSQL( $fieldsStr ) . ' WHERE `paylike_tid`="' . pSQL( $paylike_id_transaction ) . '" AND `order_id`="' . pSQL( $order_id ) . '"';
+			$query = 'UPDATE ' . _DB_PREFIX_ . 'paylike_admin SET ' . ( $fieldsStr ) . ' WHERE `paylike_tid`="' . pSQL( $paylike_id_transaction ) . '" AND `order_id`="' . pSQL( $order_id ) . '"';
 
-			return Db::getInstance()->Execute( $query );
+			return Db::getInstance()->execute( $query );
 		} else {
 			return false;
 		}
@@ -1959,7 +1977,7 @@ class PaylikePayment extends PaymentModule {
 								if ( ! empty( $capture['transaction'] ) ) {
 									//Update order status
 									//$status_paid = (int)Configuration::get('PS_OS_PAYMENT');
-									$status_paid = (int) Configuration::get( 'PAYLIKE_ORDER_STATUS' );
+									$status_paid = (int) Configuration::get( 'PAYLIKE_ORDER_STATUS_CAPTURED' );
 									$order->setCurrentState( $status_paid, $this->context->employee->id );
 
 									//Update transaction details
@@ -2184,7 +2202,7 @@ class PaylikePayment extends PaymentModule {
 					break;
 			}
 
-			die( Tools::jsonEncode( $response ) );
+			die( json_encode( $response ) );
 		}
 
 		if ( Tools::getIsset( 'upload_logo' ) ) {
@@ -2195,7 +2213,7 @@ class PaylikePayment extends PaymentModule {
 					'status'  => 0,
 					'message' => 'The logo name is mandatory. Please add it.'
 				);
-				die( Tools::jsonEncode( $response ) );
+				die( json_encode( $response ) );
 			}
 
 			$logo_slug = Tools::strtolower( str_replace( ' ', '-', $logo_name ) );
@@ -2209,7 +2227,7 @@ class PaylikePayment extends PaymentModule {
 					'status'  => 0,
 					'message' => 'This logo name already exists. Please change it and try again.'
 				);
-				die( Tools::jsonEncode( $response ) );
+				die( json_encode( $response ) );
 			}
 
 			if ( ! empty( $_FILES['logo_file']['name'] ) ) {
@@ -2227,7 +2245,7 @@ class PaylikePayment extends PaymentModule {
                         'status' => 0,
                         'message' => 'File is not an image. Please upload JPG, JPEG, PNG or GIF file.'
                     );
-                    die(Tools::jsonEncode($response));
+                    die(json_encode($response));
                 }*/
 
 				// Check if file already exists
@@ -2236,7 +2254,7 @@ class PaylikePayment extends PaymentModule {
 						'status'  => 0,
 						'message' => 'Sorry, it seems that the file already exists. Please load a file with a different name.'
 					);
-					die( Tools::jsonEncode( $response ) );
+					die( json_encode( $response ) );
 				}
 
 				// Allow certain file formats
@@ -2246,39 +2264,39 @@ class PaylikePayment extends PaymentModule {
 						'status'  => 0,
 						'message' => 'Sorry, only JPG, JPEG, PNG, GIF & SVG files are allowed.'
 					);
-					die( Tools::jsonEncode( $response ) );
+					die( json_encode( $response ) );
 				}
 
 				if ( move_uploaded_file( $_FILES['logo_file']["tmp_name"], $target_file ) ) {
 					$query = 'INSERT INTO ' . _DB_PREFIX_ . 'paylike_logos (`name`, `slug`, `file_name`, `default_logo`, `created_at`) VALUES ("' . pSQL( $logo_name ) . '", "' . pSQL( $logo_slug ) . '", "' . pSQL( $file_name ) . '", 0, NOW())';
-					if ( Db::getInstance()->Execute( $query ) ) {
+					if ( Db::getInstance()->execute( $query ) ) {
 						$response = array(
 							'status'  => 1,
 							'message' => "The file " . pSQL( basename( $file_name ) ) . " has been uploaded."
 						);
 						//Configuration::updateValue('PAYLIKE_PAYMENT_METHOD_CREDITCARD_LOGO', basename($file_name));
-						die( Tools::jsonEncode( $response ) );
+						die( json_encode( $response ) );
 					} else {
 						unlink( $target_file );
 						$response = array(
 							'status'  => 0,
 							'message' => "Oops! An error occurred while saving the logo."
 						);
-						die( Tools::jsonEncode( $response ) );
+						die( json_encode( $response ) );
 					}
 				} else {
 					$response = array(
 						'status'  => 0,
 						'message' => 'Sorry, there was an error uploading your file. Please try again.'
 					);
-					die( Tools::jsonEncode( $response ) );
+					die( json_encode( $response ) );
 				}
 			} else {
 				$response = array(
 					'status'  => 0,
 					'message' => 'Please select a file for upload.'
 				);
-				die( Tools::jsonEncode( $response ) );
+				die( json_encode( $response ) );
 			}
 		}
 
