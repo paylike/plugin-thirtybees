@@ -25,7 +25,7 @@ class PaylikePayment extends PaymentModule {
 	public function __construct() {
 		$this->name       = 'paylikepayment';
 		$this->tab        = 'payments_gateways';
-		$this->version    = '1.1.0';
+		$this->version    = '1.1.1';
 		$this->author     = 'DerikonDevelopment';
 		$this->bootstrap  = true;
 		$this->module_key = '1d083bab290f652fb6fb7ae35f9f0942';
@@ -2151,7 +2151,7 @@ class PaylikePayment extends PaymentModule {
 						} else {
 							if ( ! empty( $void['transaction'] ) ) {
 								//Update order status
-								$order->setCurrentState( (int) Configuration::get( 'PS_OS_CANCEL' ), $this->context->employee->id );
+								$order->setCurrentState( (int) Configuration::get( 'PS_OS_CANCELED' ), $this->context->employee->id );
 
 								$currency            = new Currency( (int) $order->id_currency );
 								$currency_multiplier = $this->getPaylikeCurrencyMultiplier( $currency->iso_code );
