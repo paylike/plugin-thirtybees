@@ -187,6 +187,8 @@ export var TestMethods = {
      * Get Shop & Paylike versions and send log data.
      */
      logVersions() {
+        cy.goToPage(this.AdminUrl);
+        
         cy.get('#shop_version').then(($shopVersionFromPage) => {
             var footerText = $shopVersionFromPage.text();
             var shopVersion = footerText.replace(/[^0-9.]/g, '');
