@@ -97,6 +97,7 @@
                         location.href = htmlDecode(return_url);
                     }
                 });
+            return false;
         }
 
         function htmlDecode(url) {
@@ -144,4 +145,5 @@
             </div>
         </div>
     </div>
+    <form action="#" onsubmit="return pay();"></form>
 {/if}
