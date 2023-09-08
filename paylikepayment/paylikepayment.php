@@ -64,6 +64,7 @@ class PaylikePayment extends PaymentModule {
 		return ( parent::install()
 		         && $this->registerHook( 'header' )
 		         && $this->registerHook( 'payment' )
+		         && $this->registerHook( 'displayPaymentEU' )
 		         && $this->registerHook( 'paymentReturn' )
 		         && $this->registerHook( 'DisplayAdminOrder' )
 		         && $this->registerHook( 'BackOfficeHeader' )
@@ -784,6 +785,35 @@ class PaylikePayment extends PaymentModule {
 
 			return $this->display( __FILE__, 'views/templates/hook/payment-return.tpl' );
 		}
+	}
+
+	/**
+	 * Hook for Advanced EU checkout
+	 *
+	 * @return array|null
+	 * @throws PrestaShopException
+	 */
+	public function hookDisplayPaymentEU()
+	{
+		if (!$this->active ||
+				( Configuration::get( 'PAYLIKE_TRANSACTION_MODE' ) == 'test' && !Configuration::get( 'PAYLIKE_TEST_PUBLIC_KEY' ) && !Configuration::get( 'PAYLIKE_TEST_SECRET_KEY' ) ) ||
+				( Configuration::get( 'PAYLIKE_TRANSACTION_MODE' ) == 'live' && !Configuration::get( 'PAYLIKE_LIVE_PUBLIC_KEY' ) && !Configuration::get( 'PAYLIKE_LIVE_SECRET_KEY' ) )
+		) {
+			return false;
+		}
+
+		$paymentOptions = [];
+
+		$language_code = Configuration::get( 'PAYLIKE_LANGUAGE_CODE' );
+		$payment_method_title = ( ! empty( Configuration::get( $language_code . '_PAYLIKE_PAYMENT_METHOD_TITLE' ) ) ) ? Configuration::get( $language_code . '_PAYLIKE_PAYMENT_METHOD_TITLE' ) : ( ! empty( Configuration::get( 'en_PAYLIKE_PAYMENT_METHOD_TITLE' ) ) ? Configuration::get( 'en_PAYLIKE_PAYMENT_METHOD_TITLE' ) : '' );
+
+		$paymentOptions[] = [
+			'cta_text' => $this->l($payment_method_title),
+			'logo'	 => Media::getMediaPath($this->_path.'logo.png'),
+			'form' => $this->hookPayment(['cart' => $cart = $this->context->cart])
+		];
+
+		return $paymentOptions;
 	}
 
 	public function storeTransactionID( $paylike_id_transaction, $order_id, $total, $captured = 'NO' ) {
